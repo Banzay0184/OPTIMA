@@ -1,0 +1,101 @@
+@import "tailwindcss";
+/* Обновите существующие стили или добавьте новые в конец файла */
+.leaflet-container {
+    background-color: #f0f9ff;
+}
+
+.leaflet-tile-pane {
+    display: none;
+}
+
+.leaflet-popup-content-wrapper {
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.leaflet-popup-content {
+    margin: 0;
+}
+
+.leaflet-popup-content h3 {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.leaflet-popup-content p {
+    margin-bottom: 12px;
+}
+
+/* Добавьте эти стили в конец файла */
+.map-container {
+    position: relative;
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    overflow: hidden;
+}
+
+.map-container svg {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.factory-marker {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.factory-marker:hover {
+    transform: scale(1.2);
+}
+
+.tooltip {
+    position: absolute;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 8px;
+    font-size: 14px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.tooltip.visible {
+    opacity: 1;
+}
+
+.dashed-line {
+    background: repeating-linear-gradient(
+        to right,
+        white,
+        white 10px,
+        transparent 10px,
+        transparent 20px
+    );
+}
+
+.overflow-y-scroll::-webkit-scrollbar {
+    display: none;
+}
+.overflow-y-scroll {
+    -ms-overflow-style: none; /* IE и Edge */
+    scrollbar-width: none; /* Firefox */
+}
+
+
+@media (min-width: 640px) {
+    .dashed-line {
+        background: repeating-linear-gradient(
+                to right,
+                white,
+                white 10px,
+                transparent 10px,
+                transparent 20px
+        );
+    }
+}
+
+

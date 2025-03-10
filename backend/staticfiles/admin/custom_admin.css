@@ -1,0 +1,54 @@
+/* Изменяем цвета */
+:root {
+    --primary: #2c3e50; /* Темно-синий */
+    --secondary: #3498db; /* Голубой */
+    --link-color: #2980b9;
+    --header-bg: #ecf0f1;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f5f6fa;
+}
+
+/* Заголовок */
+#header {
+    background-color: var(--primary);
+    color: white;
+    border-bottom: 3px solid var(--secondary);
+}
+
+/* Кнопки */
+.button, input[type=submit], input[type=button], .submit-row input {
+    background-color: var(--secondary);
+    border: none;
+    border-radius: 5px;
+    padding: 8px 15px;
+    color: white;
+}
+
+.button:hover, input[type=submit]:hover, input[type=button]:hover {
+    background-color: #2980b9;
+}
+
+/* Таблица */
+.changelist-results table {
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    background-color: white;
+}
+
+th, td {
+    padding: 10px;
+}
+
+th {
+    background-color: var(--header-bg);
+}
+
+/* Фильтры */
+.selector-chosen, .selector-available {
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}

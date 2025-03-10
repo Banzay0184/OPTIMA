@@ -1,0 +1,21 @@
+{% extends "admin/change_list.html" %}
+{% load static %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static 'admin/css/custom_admin.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <h1>Продукты</h1>
+            <p class="subtitle">Управление товарами в стильной админке</p>
+        </div>
+        <div class="dashboard-actions">
+            <a href="{% url 'admin:core_product_add' %}" class="btn btn-primary">Добавить продукт</a>
+        </div>
+        {{ block.super }}  <!-- Оригинальный контент (таблица и фильтры) -->
+    </div>
+{% endblock %}
