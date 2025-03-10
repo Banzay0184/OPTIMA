@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import trackimg from "../assets/trackimg.png";
+import trackimg from "../assets/trackImg.png";
 
 const TruckJourney = () => {
     // Варианты анимации для грузовика
