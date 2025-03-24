@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Link, useLocation } from "react-router-dom"
 import { motion } from "framer-motion"
 import { Menu, X, ChevronDown } from "lucide-react"
-import logo from "../assets/optima_logo.webp"
+import logo from "../assets/optima_logo.png"
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false)
