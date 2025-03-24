@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Link, useLocation } from "react-router-dom"
 import { motion } from "framer-motion"
 import { Menu, X, ChevronDown } from "lucide-react"
-import logo from "../assets/optima_logo.png"
+import logo from "../assets/optima_logo.webp"
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false)
@@ -54,7 +54,7 @@ const Navbar = () => {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link to="/" className="flex-shrink-0 flex items-center">
-              <motion.img whileHover={{ rotate: 10 }} className={`h-15 w-auto ${isScrolled ? "" : "brightness-800"}`} src={logo} alt="OPTIMA PET" />
+              <motion.img whileHover={{ rotate: 10 }} className={`h-15 w-auto ${isScrolled ? "" : "brightness-800"}`} src={logo} alt="OPTIMA PET" width="300" height="100" loading="lazy"/>
             </Link>
           </div>
 

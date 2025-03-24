@@ -71,16 +71,6 @@ const HomePage = () => {
                         muted
                         onError={() => console.error("Ошибка загрузки видео")}
                     >
-                        <source
-                            src="https://dl.dropboxusercontent.com/scl/fi/wby3c9ru9l26v1udaxycg/test.mp4?rlkey=ykdy5t5cyuvly9r6kw92p9v6o&st=dkj7o8p0&dl=0"
-                            type="video/mp4"
-                            media="(min-width: 768px)"
-                        />
-                        <source
-                            src="https://dl.dropboxusercontent.com/scl/fi/ee2o8b6vbr8ac729eka8t/mobile.mp4?rlkey=8vfs8fojnrji993h2bk6kg00p&st=63qztlrh&dl=0"
-                            type="video/mp4"
-                            media="(max-width: 767px)"
-                        />
                         <img src={bgImg} alt="Fallback изображение" className="w-full h-full object-cover"/>
                     </video>
                 </div>
