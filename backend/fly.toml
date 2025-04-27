@@ -25,7 +25,7 @@ console_command = '/manage.py shell'
 
 
 [[statics]]
-  guest_path = '/static'
+  guest_path = "/code/staticfiles"
   url_prefix = '/static/'
 
 [deploy]

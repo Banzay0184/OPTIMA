@@ -1,0 +1,23 @@
+name: Deploy to Fly.io 🚀
+
+on:
+  push:
+    branches:
+      - master   # или main — в зависимости от твоей ветки
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v3
+
+      - name: 🛠️ Set up Flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: 🚀 Deploy to Fly.io
+        run: flyctl deploy --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
