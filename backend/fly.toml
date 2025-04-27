@@ -31,3 +31,6 @@ console_command = '/manage.py shell'
 [deploy]
   release_command = "python manage.py migrate"
   command = "gunicorn config.wsgi:application --bind 0.0.0.0:8000"
+
+[mounts]
+  source="data_volume"
