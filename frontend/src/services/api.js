@@ -184,7 +184,7 @@ export const fetchProducts = async (categoryId, typeId, excludeProductId = null)
     if (typeId) params.type = typeId;
     if (excludeProductId) params.exclude = excludeProductId;
     
-    const response = await api.get("/api/products/", { params });
+    const response = await api.get("/products/", { params });
     
     if (response.status === 200) {
       console.log("Продукты успешно получены:", response.data);
@@ -401,7 +401,7 @@ export const adminDeleteType = async (id) => {
 // --- Products ---
 export const adminFetchProducts = async (params = {}) => {
   try {
-    const response = await adminApi.get("/api/admin/products/", { params });
+    const response = await adminApi.get("/products/", { params });
     
     if (response.status === 200) {
       console.log("Продукты успешно получены администратором:", response.data);

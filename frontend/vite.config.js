@@ -1,26 +1,17 @@
 import {defineConfig} from 'vite'
 import react from '@vitejs/plugin-react'
-import postcssImport from 'postcss-import'
-import autoprefixer from 'autoprefixer'
+import tailwindcss from '@tailwindcss/vite'
 
-// https://vitejs.dev/config/
+// https://vite.dev/config/
 export default defineConfig({
-    plugins: [react()],
-    css: {
-        postcss: {
-            plugins: [
-                postcssImport(),
-                autoprefixer()
-            ],
-        },
-    },
+    plugins: [tailwindcss(), react()],
     server: {
         port: 3000,
         proxy: {
-            '/api': {
-                target: 'https://optima.fly.dev/api/v1',
+            '/api/v1': {
+                target: 'https://optima.fly.dev',
                 changeOrigin: true,
-                rewrite: (path) => path.replace(/^\/api/, '')
+                secure: false,
             }
         }
     }
