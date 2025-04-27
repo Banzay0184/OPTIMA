@@ -21,9 +21,3 @@ jobs:
         run: flyctl deploy --remote-only
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-
-      - name: 🐍 Run migrations
-        run: |
-          flyctl ssh console -C "python manage.py migrate"
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
