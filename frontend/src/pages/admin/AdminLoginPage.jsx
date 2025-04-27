@@ -82,13 +82,18 @@ const AdminLoginPage = () => {
                    localStorage.getItem("token") || 
                    localStorage.getItem("access_token");
       
+      console.log("AdminLoginPage: Проверка авторизации, токен существует:", !!token);
+      
       if (token) {
         // Проверяем JWT
         if (typeof token === 'string' && token.split('.').length === 3) {
           const { valid, error } = validateJWT(token);
           if (valid) {
             // Токен действителен, перенаправляем на панель администратора
-            navigate("/admin");
+            const redirectPath = localStorage.getItem('adminRedirectPath') || '/admin';
+            console.log("AdminLoginPage: Перенаправление на", redirectPath);
+            navigate(redirectPath);
+            localStorage.removeItem('adminRedirectPath');
             return;
           } else {
             console.warn("Ошибка валидации JWT:", error);
@@ -102,7 +107,10 @@ const AdminLoginPage = () => {
         
         // Если не JWT формат, просто проверяем наличие
         if (token) {
-          navigate("/admin");
+          const redirectPath = localStorage.getItem('adminRedirectPath') || '/admin';
+          console.log("AdminLoginPage: Перенаправление на", redirectPath);
+          navigate(redirectPath);
+          localStorage.removeItem('adminRedirectPath');
         }
       }
     };
@@ -170,7 +178,12 @@ const AdminLoginPage = () => {
           
           // Если запрос прошел успешно, показываем уведомление и перенаправляем
           toast.success("Вход выполнен успешно!");
-          navigate("/admin");
+          
+          // Перенаправляем на предыдущий путь или на панель администратора
+          const redirectPath = localStorage.getItem('adminRedirectPath') || '/admin';
+          console.log("Перенаправление после входа на:", redirectPath);
+          navigate(redirectPath);
+          localStorage.removeItem('adminRedirectPath');
         } catch (testError) {
           // Детализируем ошибку для пользователя
           if (testError.response?.status === 401) {

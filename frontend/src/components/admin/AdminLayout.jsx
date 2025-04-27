@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Outlet, Link, useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
@@ -19,6 +19,8 @@ import {
 const validateToken = (token) => {
   if (!token) return false;
   
+  console.log("Проверка токена:", token.substring(0, 10) + "...");
+  
   // Проверяем, является ли токен JWT (формат: xxxx.yyyy.zzzz)
   if (token.split('.').length === 3) {
     try {
@@ -28,16 +30,20 @@ const validateToken = (token) => {
       // Проверяем срок действия токена
       const currentTime = Math.floor(Date.now() / 1000);
       if (payload.exp && payload.exp < currentTime) {
+        console.log("Токен просрочен", payload.exp, currentTime);
         return false;
       }
       
+      console.log("Токен JWT валиден");
       return true;
     } catch (e) {
+      console.error("Ошибка при проверке JWT токена:", e);
       return false;
     }
   }
   
   // Для не-JWT токенов просто проверяем наличие
+  console.log("Токен не в формате JWT");
   return true;
 };
 
@@ -48,39 +54,51 @@ const getAdminToken = () => {
   
   for (const key of tokenKeys) {
     const token = localStorage.getItem(key);
+    console.log(`Проверка наличия токена в ${key}:`, token ? "Найден" : "Не найден");
     if (token && validateToken(token)) {
       return token;
     }
   }
   
+  console.log("Не найдено валидных токенов");
   return null;
 };
 
 const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
   // При монтировании компонента проверяем наличие токена
   useEffect(() => {
+    console.log("AdminLayout: Проверка авторизации...");
     const token = getAdminToken();
     
     if (!token) {
+      console.log("AdminLayout: Токен не найден, перенаправление на /admin/login");
       navigate("/admin/login");
+      return;
     }
+    
+    console.log("AdminLayout: Токен найден, устанавливаем isAuthenticated=true");
+    setIsAuthenticated(true);
   }, [navigate]);
 
   // Функция для выхода из панели администратора
   const handleLogout = () => {
+    console.log("AdminLayout: Выполняем выход из системы");
     // Удаляем все возможные токены
     localStorage.removeItem("adminToken");
     localStorage.removeItem("token");
     localStorage.removeItem("access_token");
+    setIsAuthenticated(false);
     navigate("/admin/login");
   };
 
   // Если не авторизован, ничего не рендерим (перенаправление произойдет в useEffect)
-  if (!getAdminToken()) {
+  if (!isAuthenticated) {
+    console.log("AdminLayout: isAuthenticated=false, возвращаем null");
     return null;
   }
 

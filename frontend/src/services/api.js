@@ -45,9 +45,9 @@ const api = axios.create({
 // Создаем клиент axios для административных запросов
 const adminApi = axios.create({
   baseURL: BASE_URL,
-  headers: {
+    headers: {
     'Content-Type': 'application/json',
-  },
+    },
 });
 
 // Интерцептор для добавления токена к каждому запросу
@@ -70,7 +70,15 @@ adminApi.interceptors.response.use(
   (error) => {
     // Если токен просрочен или недействителен (401)
     if (error.response && error.response.status === 401) {
-      console.error('Ошибка авторизации:', error.response.data);
+      console.error('Ошибка авторизации 401:', error.response.data);
+      console.log('Текущий путь:', window.location.pathname);
+      
+      // Сохраняем текущий путь для возврата после авторизации
+      if (window.location.pathname.includes('/admin') && 
+          !window.location.pathname.includes('/admin/login')) {
+        localStorage.setItem('adminRedirectPath', window.location.pathname);
+      }
+      
       // Выполняем выход из системы
       localStorage.removeItem("adminToken");
       localStorage.removeItem("token");
@@ -79,6 +87,7 @@ adminApi.interceptors.response.use(
       // Обновляем страницу для перехода на логин если мы на странице админки
       if (window.location.pathname.includes('/admin') && 
           !window.location.pathname.includes('/admin/login')) {
+        console.log('Перенаправление на страницу логина из-за ошибки 401');
         window.location.href = '/admin/login';
       }
     }
@@ -136,7 +145,7 @@ export const fetchCategories = async () => {
 
 // --- Types ---
 export const fetchTypes = async () => {
-  try {
+    try {
     const response = await api.get('/types/');
     
     // Проверяем структуру ответа
@@ -181,10 +190,10 @@ export const fetchProducts = async (categoryId, typeId, excludeProductId = null)
   try {
     let params = {};
     if (categoryId) params.category = categoryId;
-    if (typeId) params.type = typeId;
+        if (typeId) params.type = typeId;
     if (excludeProductId) params.exclude = excludeProductId;
-    
-    const response = await api.get("/products/", { params });
+
+        const response = await api.get("/products/", { params });
     
     if (response.status === 200) {
       console.log("Продукты успешно получены:", response.data);
@@ -192,7 +201,7 @@ export const fetchProducts = async (categoryId, typeId, excludeProductId = null)
     }
     
     throw new Error("Не удалось получить продукты");
-  } catch (error) {
+    } catch (error) {
     console.error("Ошибка при получении продуктов:", error);
     throw error;
   }
@@ -226,14 +235,14 @@ export const fetchProductsByType = async (typeId, page = 1, limit = 12) => {
   } catch (error) {
     console.error(`Error fetching products by type (${typeId}):`, error);
     return { products: [], total: 0, totalPages: 0 };
-  }
+    }
 };
 
 export const fetchProductById = async (productId) => {
-  try {
-    const response = await api.get(`/products/${productId}/`);
-    return response.data;
-  } catch (error) {
+    try {
+        const response = await api.get(`/products/${productId}/`);
+        return response.data;
+    } catch (error) {
     console.error(`Error fetching product ${productId}:`, error);
     throw error;
   }
