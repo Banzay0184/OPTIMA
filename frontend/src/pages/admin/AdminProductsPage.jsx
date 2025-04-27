@@ -52,9 +52,11 @@ const AdminProductsPage = () => {
   }, [filters.category, filters.type]);
 
   // Поиск по названию продукта
-  const filteredProducts = products.filter(product => 
-    product.product_name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredProducts = Array.isArray(products) 
+    ? products.filter(product => 
+        product.product_name.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : [];
 
   // Получение имени категории по ID
   const getCategoryName = (categoryId) => {

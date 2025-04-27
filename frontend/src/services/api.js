@@ -405,7 +405,16 @@ export const adminFetchProducts = async (params = {}) => {
     
     if (response.status === 200) {
       console.log("Продукты успешно получены администратором:", response.data);
-      return response.data;
+      
+      // Проверяем структуру ответа и возвращаем массив продуктов
+      if (response.data && response.data.results && Array.isArray(response.data.results)) {
+        return response.data.results;
+      } else if (Array.isArray(response.data)) {
+        return response.data;
+      }
+      
+      // Если нет ни results, ни массива, возвращаем пустой массив
+      return [];
     }
     
     throw new Error("Не удалось получить продукты");
