@@ -44,14 +44,45 @@ const AdminCategoriesPage = () => {
 
     try {
       setLoading(true);
-      await adminAddCategory({ category_name: newCategoryName });
+      // Проверяем наличие токена перед отправкой запроса
+      const token = localStorage.getItem("adminToken") || 
+                   localStorage.getItem("token") || 
+                   localStorage.getItem("access_token");
+                   
+      if (!token) {
+        setError("Отсутствует токен авторизации. Выполните вход заново.");
+        setLoading(false);
+        return;
+      }
+      
+      // Выводим отладочную информацию
+      console.log("Отправка запроса на добавление категории:", { category_name: newCategoryName });
+      
+      const response = await adminAddCategory({ category_name: newCategoryName });
+      console.log("Ответ сервера при добавлении категории:", response);
+      
       setNewCategoryName("");
       setIsAdding(false);
       await fetchCategories(); // Перезагружаем категории
+      setError(null);
     } catch (err) {
+      console.error("Ошибка при добавлении категории:", err);
+      
       // Получаем понятное сообщение об ошибке для пользователя
-      if (err.message.includes("Категория с таким названием уже существует")) {
-        setError(`Категория "${newCategoryName}" уже существует. Пожалуйста, используйте другое название.`);
+      if (err.response) {
+        if (err.response.status === 401) {
+          setError("Ошибка авторизации. Пожалуйста, выполните вход заново.");
+        } else if (err.response.status === 400 && err.response.data) {
+          if (err.response.data.category_name) {
+            setError(`Ошибка: ${err.response.data.category_name[0]}`);
+          } else {
+            setError("Некорректные данные категории. Проверьте название.");
+          }
+        } else if (err.message.includes("Категория с таким названием уже существует")) {
+          setError(`Категория "${newCategoryName}" уже существует. Пожалуйста, используйте другое название.`);
+        } else {
+          setError(`Ошибка при добавлении категории: ${err.message}`);
+        }
       } else {
         setError(`Ошибка при добавлении категории: ${err.message}`);
       }

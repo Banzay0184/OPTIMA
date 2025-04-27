@@ -3,7 +3,7 @@ import axios from "axios";
 
 // Определяем базовый URL в зависимости от окружения
 const BASE_URL = process.env.NODE_ENV === 'development' 
-  ? '/api'  // В режиме разработки используем относительный путь для прокси
+  ? 'https://optima.fly.dev/api/v1'  // Используем прямой URL к API даже в режиме разработки
   : 'https://optima.fly.dev/api/v1'; // На продакшене используем полный путь
 
 /**
@@ -45,21 +45,38 @@ const api = axios.create({
 // Создаем клиент axios для административных запросов
 const adminApi = axios.create({
   baseURL: BASE_URL,
-    headers: {
+  headers: {
     'Content-Type': 'application/json',
-    },
+  },
 });
 
 // Интерцептор для добавления токена к каждому запросу
 adminApi.interceptors.request.use(
   (config) => {
-    const tokenFormat = getTokenFormat();
-    if (tokenFormat) {
-      config.headers.Authorization = tokenFormat;
+    // Просто получаем токен напрямую
+    const token = getAdminToken();
+    console.log('Запрос к API:', config.url, 'Токен:', token ? 'Присутствует' : 'Отсутствует');
+    
+    if (!token) {
+      console.warn('Отсутствует токен авторизации для запроса:', config.url);
+      // Если мы на странице админки и нет токена, сохраняем путь и перенаправляем на логин
+      if (window.location.pathname.includes('/admin') && 
+          !window.location.pathname.includes('/admin/login')) {
+        localStorage.setItem('adminRedirectPath', window.location.pathname);
+        console.log('Перенаправление на /admin/login из-за отсутствия токена');
+        window.location.href = '/admin/login';
+        // Прерываем выполнение запроса
+        throw new axios.Cancel('Операция отменена из-за отсутствия токена авторизации');
+      }
+    } else {
+      // Добавляем токен в простом формате Bearer
+      config.headers.Authorization = `Bearer ${token}`;
     }
+    
     return config;
   },
   (error) => {
+    console.error('Ошибка в интерцепторе запроса:', error);
     return Promise.reject(error);
   }
 );
@@ -263,6 +280,8 @@ export const searchProducts = async (query) => {
 // Авторизация
 export const adminLogin = async (username, password) => {
   try {
+    console.log('Отправка запроса на авторизацию:', { username });
+    
     const response = await axios.post(`${BASE_URL}/token/`, { username, password });
     
     // Обработка и логирование ответа
@@ -274,18 +293,18 @@ export const adminLogin = async (username, password) => {
                   response?.data?.access_token;
                   
     if (token) {
+      console.log('Токен получен, сохраняем в localStorage');
+      
       localStorage.setItem("adminToken", token);
       // Для обратной совместимости также сохраняем в старых форматах
       localStorage.setItem("token", token);
       localStorage.setItem("access_token", token);
       
-      // Проверяем формат токена
-      const tokenFormat = getTokenFormat(token);
-      if (!tokenFormat) {
-        console.warn("Получен недействительный токен от сервера");
-      }
+      // Для проверки сразу же выводим сохраненный токен
+      const savedToken = localStorage.getItem("adminToken");
+      console.log('Проверка сохраненного токена:', savedToken ? 'Сохранен успешно' : 'Ошибка сохранения');
     } else {
-      console.error("Токен не получен в ответе от сервера");
+      console.error("Токен не получен в ответе от сервера", response.data);
     }
     
     return response.data;
