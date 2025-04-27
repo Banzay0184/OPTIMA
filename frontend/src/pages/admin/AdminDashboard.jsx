@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Package, Layers, Tags, Plus, BarChart3, TrendingUp, Users } from "lucide-react";
-import { adminGetCategories, adminGetProducts, adminGetTypes } from "../../services/api";
+import { adminFetchCategories, adminFetchProducts, adminFetchTypes } from "../../services/api";
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 20 },
@@ -30,9 +30,9 @@ const AdminDashboard = () => {
       try {
         setLoading(true);
         const [categories, types, products] = await Promise.all([
-          adminGetCategories(),
-          adminGetTypes(),
-          adminGetProducts(),
+          adminFetchCategories(),
+          adminFetchTypes(),
+          adminFetchProducts(),
         ]);
 
         setCounts({

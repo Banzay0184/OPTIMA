@@ -4,11 +4,11 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Plus, Pencil, Trash2, X, Check, AlertTriangle } from "lucide-react";
 import {
-  adminGetTypes,
+  adminFetchTypes,
   adminAddType,
   adminUpdateType,
   adminDeleteType,
-  adminGetCategories,
+  adminFetchCategories,
 } from "../../services/api";
 
 const AdminTypesPage = () => {
@@ -34,8 +34,8 @@ const AdminTypesPage = () => {
     try {
       setLoading(true);
       const [typesData, categoriesData] = await Promise.all([
-        adminGetTypes(),
-        adminGetCategories(),
+        adminFetchTypes(),
+        adminFetchCategories(),
       ]);
       setTypes(typesData);
       setCategories(categoriesData);

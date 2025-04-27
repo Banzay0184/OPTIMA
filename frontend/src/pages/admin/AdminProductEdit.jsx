@@ -14,13 +14,13 @@ import {
   Camera
 } from "lucide-react";
 import {
-  adminGetProduct,
+  adminFetchProductById,
+  adminUploadProductImage,
   adminAddProduct,
   adminUpdateProduct,
-  adminGetCategories,
-  adminGetTypes,
+  adminFetchCategories,
+  adminFetchTypes,
   adminDeleteProductImage,
-  adminUploadProductImage
 } from "../../services/api";
 
 const AdminProductEdit = () => {
@@ -69,8 +69,8 @@ const AdminProductEdit = () => {
         
         // Загружаем справочники
         const [categoriesData, typesData] = await Promise.all([
-          adminGetCategories(),
-          adminGetTypes(),
+          adminFetchCategories(),
+          adminFetchTypes(),
         ]);
         
         setCategories(categoriesData);
@@ -78,7 +78,7 @@ const AdminProductEdit = () => {
         
         // Если редактируем существующий продукт, загружаем его данные
         if (!isNewProduct) {
-          const product = await adminGetProduct(id);
+          const product = await adminFetchProductById(id);
           
           setFormData({
             product_name: product.product_name || "",

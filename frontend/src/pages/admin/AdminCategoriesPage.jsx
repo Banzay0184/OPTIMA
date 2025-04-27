@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Plus, Pencil, Trash2, X, Check, AlertTriangle } from "lucide-react";
 import {
-  adminGetCategories,
+  adminFetchCategories,
   adminAddCategory,
   adminUpdateCategory,
   adminDeleteCategory,
@@ -24,7 +24,7 @@ const AdminCategoriesPage = () => {
   const fetchCategories = async () => {
     try {
       setLoading(true);
-      const data = await adminGetCategories();
+      const data = await adminFetchCategories();
       setCategories(data);
       setError(null);
     } catch (err) {

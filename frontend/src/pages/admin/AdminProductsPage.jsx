@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Plus, Trash2, Edit, Search, AlertTriangle, Filter } from "lucide-react";
-import { adminGetProducts, adminDeleteProduct, adminGetCategories, adminGetTypes } from "../../services/api";
+import { adminFetchProducts, adminDeleteProduct, adminFetchCategories, adminFetchTypes } from "../../services/api";
 
 const AdminProductsPage = () => {
   const [products, setProducts] = useState([]);
@@ -31,9 +31,9 @@ const AdminProductsPage = () => {
       if (filters.type !== "all") params.type = filters.type;
       
       const [productsData, categoriesData, typesData] = await Promise.all([
-        adminGetProducts(params),
-        adminGetCategories(),
-        adminGetTypes(),
+        adminFetchProducts(params),
+        adminFetchCategories(),
+        adminFetchTypes(),
       ]);
       
       setProducts(productsData);
