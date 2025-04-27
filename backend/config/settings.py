@@ -7,7 +7,7 @@ SECRET_KEY = 'django-insecure-&x5gofpp=*g0vgwg9(-%@5dcu8t5l_cb^(#9#aq@30)ukeiten
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['.fly.dev']
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
