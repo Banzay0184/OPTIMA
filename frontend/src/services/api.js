@@ -138,7 +138,8 @@ adminApi.interceptors.response.use(
 export const fetchCategories = async () => {
   try {
     const response = await api.get('/categories/');
-    return response.data;
+    // Убедимся, что возвращаем массив
+    return Array.isArray(response.data) ? response.data : [];
   } catch (error) {
     console.error('Error fetching categories:', error);
     throw error;

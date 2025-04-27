@@ -282,7 +282,7 @@ const HomePage = () => {
                             variants={staggerContainer}
                             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
                         >
-                            {categories.slice(0, 4).map((category) => (
+                            {Array.isArray(categories) && categories.slice(0, 4).map((category) => (
                                 <motion.div
                                     key={category.id}
                                     variants={fadeInUp}
