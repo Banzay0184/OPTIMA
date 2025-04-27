@@ -13,7 +13,7 @@ CSRF_TRUSTED_ORIGINS = ['https://optima.fly.dev']
 
 CORS_ALLOWED_ORIGINS = [
     "https://optima.fly.dev",
-    "https://optima-plast.uz,
+    "https://optima-plast.uz",
 ]
 
 
