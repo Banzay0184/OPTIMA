@@ -1,7 +1,10 @@
 // src/services/api.js
 import axios from "axios";
 
-const BASE_URL = 'https://optima.fly.dev/api/v1';
+// Определяем базовый URL в зависимости от окружения
+const BASE_URL = process.env.NODE_ENV === 'development' 
+  ? '/api/v1'  // В режиме разработки используем относительный путь
+  : 'https://optima.fly.dev/api/v1'; // На продакшене используем полный путь
 
 // Функция для определения нужного формата токена
 const getTokenFormat = (token) => {
