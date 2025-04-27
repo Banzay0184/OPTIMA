@@ -16,6 +16,11 @@ const fadeIn = {
 // Функция для проверки JWT токена
 const validateJWT = (token) => {
   try {
+    // Проверяем, что token является строкой
+    if (typeof token !== 'string') {
+      return { valid: false, error: "Токен должен быть строкой" };
+    }
+    
     // Проверяем формат JWT (xxxx.yyyy.zzzz)
     if (!token || token.split('.').length !== 3) {
       return { valid: false, error: "Неверный формат JWT токена" };
@@ -38,6 +43,12 @@ const validateJWT = (token) => {
 
 // Функция для определения правильного формата токена
 const getTokenFormat = (token) => {
+  // Проверяем, что token является строкой
+  if (typeof token !== 'string') {
+    console.warn("Токен должен быть строкой");
+    return "Token"; // Возвращаем значение по умолчанию
+  }
+  
   // Проверяем, является ли токен JWT (формат: xxxx.yyyy.zzzz)
   if (token && token.split('.').length === 3) {
     try {
@@ -73,7 +84,7 @@ const AdminLoginPage = () => {
       
       if (token) {
         // Проверяем JWT
-        if (token.split('.').length === 3) {
+        if (typeof token === 'string' && token.split('.').length === 3) {
           const { valid, error } = validateJWT(token);
           if (valid) {
             // Токен действителен, перенаправляем на панель администратора
@@ -127,7 +138,11 @@ const AdminLoginPage = () => {
                    (response?.user?.token);
       
       if (token) {
-        console.log("Токен получен:", token.substring(0, 10) + "...");
+        // Безопасно выводим токен (только начало)
+        const tokenPreview = typeof token === 'string' && token.length > 10 ? 
+                           token.substring(0, 10) + "..." : 
+                           "Token received";
+        console.log("Токен получен:", tokenPreview);
         
         // Сохраняем токен во всех возможных местах хранения для совместимости
         localStorage.setItem("adminToken", token);

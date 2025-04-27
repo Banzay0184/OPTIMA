@@ -10,6 +10,12 @@ const BASE_URL = process.env.NODE_ENV === 'development'
 const getTokenFormat = (token) => {
   if (!token) return null;
   
+  // Проверяем, что token - это строка или имеет метод slice
+  if (typeof token !== 'string' && !(token && typeof token.slice === 'function')) {
+    console.warn("Токен должен быть строкой");
+    return null;
+  }
+  
   // Проверяем, является ли токен JWT (формат: xxxx.yyyy.zzzz)
   if (token.split('.').length === 3) {
     try {
