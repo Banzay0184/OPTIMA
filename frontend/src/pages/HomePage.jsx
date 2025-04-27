@@ -35,8 +35,17 @@ const HomePage = () => {
             try {
                 setLoading(true);
                 const data = await fetchCategories();
-                setCategories(data);
+                console.log('Categories data received:', data);
+                
+                // Убедимся, что data является массивом
+                if (!Array.isArray(data)) {
+                    console.error('Данные категорий не являются массивом:', data);
+                    setCategories([]);
+                } else {
+                    setCategories(data);
+                }
             } catch (err) {
+                console.error('Ошибка при загрузке категорий:', err);
                 setError("Не удалось загрузить категории. Попробуйте позже.");
             } finally {
                 setLoading(false);
@@ -44,6 +53,11 @@ const HomePage = () => {
         };
         loadCategories();
     }, []);
+
+    // Отладочный вывод для проверки состояния категорий
+    useEffect(() => {
+        console.log('Current categories state:', categories);
+    }, [categories]);
 
     const fadeInUp = {
         hidden: {opacity: 0, y: 60},
@@ -274,6 +288,8 @@ const HomePage = () => {
                         <p className="text-center text-red-600">{error}</p>
                     ) : loading ? (
                         <p className="text-center text-gray-600">Загрузка категорий...</p>
+                    ) : !Array.isArray(categories) || categories.length === 0 ? (
+                        <p className="text-center text-gray-600">Категории не найдены</p>
                     ) : (
                         <motion.div
                             initial="hidden"
@@ -282,7 +298,7 @@ const HomePage = () => {
                             variants={staggerContainer}
                             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
                         >
-                            {Array.isArray(categories) && categories.slice(0, 4).map((category) => (
+                            {categories.slice(0, 4).map((category) => (
                                 <motion.div
                                     key={category.id}
                                     variants={fadeInUp}
