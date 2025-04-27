@@ -28,7 +28,6 @@ const UzbekistanMap = () => {
             window.open(`https://www.google.com/maps/search/?api=1&query=${encodedAddress}`, "_blank");
         } catch (error) {
             setError("Не удалось открыть Google Maps. Проверьте подключение к интернету.");
-            console.error("Ошибка при открытии Google Maps:", error);
         }
     };
 

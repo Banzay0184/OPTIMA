@@ -97,6 +97,15 @@ const Navbar = () => {
               </Link>
             </motion.div>
 
+            <motion.div whileHover="hover" variants={linkVariants}>
+              <Link
+                to="/admin/login"
+                className={`px-3 py-2 rounded-md text-sm font-medium ${isScrolled ? "text-gray-700 hover:text-blue-600" : "text-white hover:text-blue-200"}`}
+              >
+                Личный кабинет
+              </Link>
+            </motion.div>
+
             <motion.a
                 type="button"
                 href='tel:+998906111011'

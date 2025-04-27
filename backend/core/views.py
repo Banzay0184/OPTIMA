@@ -2,8 +2,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.http import Http404
-from .models import Category, Type, Product
-from .serializers import CategorySerializer, TypeSerializer, ProductSerializer
+from .models import Category, Type, Product, ProductImage
+from .serializers import CategorySerializer, TypeSerializer, ProductSerializer, ProductImageSerializer
 from django.db.models import Q
 from django.contrib.auth.models import User
 from rest_framework.authtoken.models import Token
@@ -450,3 +450,134 @@ class ProductDetailView(APIView):
         product = self.get_object(pk)
         product.delete()
         return Response({"message": "Product deleted"}, status=status.HTTP_204_NO_CONTENT)
+
+
+class ProductImageListCreateView(APIView):
+    @swagger_auto_schema(
+        operation_id='list_product_images',
+        operation_summary='Получить список изображений продукта',
+        operation_description='Возвращает список изображений для указанного продукта.',
+        manual_parameters=[
+            openapi.Parameter('product', openapi.IN_QUERY, description="ID продукта",
+                              type=openapi.TYPE_INTEGER, required=False),
+        ],
+        responses={
+            200: ProductImageSerializer(many=True),
+            401: openapi.Response('Требуется аутентификация',
+                                  openapi.Schema(type='object', properties={'detail': {'type': 'string'}}))
+        },
+        security=[{'TokenAuth': []}]
+    )
+    def get(self, request):
+        """Получить список изображений продуктов с фильтрацией по ID продукта."""
+        product_id = request.query_params.get('product', None)
+        
+        if product_id:
+            images = ProductImage.objects.filter(product_id=product_id)
+        else:
+            images = ProductImage.objects.all()
+            
+        serializer = ProductImageSerializer(images, many=True)
+        return Response(serializer.data)
+
+    @swagger_auto_schema(
+        operation_id='create_product_image',
+        operation_summary='Загрузить изображение продукта',
+        operation_description='Загружает новое изображение для указанного продукта.',
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['product', 'image'],
+            properties={
+                'product': openapi.Schema(type=openapi.TYPE_INTEGER, description='ID продукта'),
+                'image': openapi.Schema(type=openapi.TYPE_FILE, description='Файл изображения'),
+            }
+        ),
+        responses={
+            201: ProductImageSerializer,
+            400: openapi.Response('Неверные данные', openapi.Schema(type='object', 
+                                                                 properties={'error': {'type': 'string'},
+                                                                             'details': {'type': 'object'}})),
+            401: openapi.Response('Требуется аутентификация',
+                                  openapi.Schema(type='object', properties={'detail': {'type': 'string'}}))
+        },
+        security=[{'TokenAuth': []}]
+    )
+    def post(self, request):
+        """Загрузить новое изображение для продукта."""
+        if not request.user.is_authenticated:
+            return Response({"detail": "Authentication credentials were not provided."},
+                            status=status.HTTP_401_UNAUTHORIZED)
+        
+        print(f"Получен запрос на загрузку изображения: {request.data}")
+        
+        # Проверяем, что product_id указан и существует
+        product_id = request.data.get('product')
+        if not product_id:
+            return Response({"error": "Product ID is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            product = Product.objects.get(pk=product_id)
+        except Product.DoesNotExist:
+            return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        # Проверяем, что файл изображения предоставлен
+        if 'image' not in request.FILES:
+            return Response({"error": "Image file is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Создаем сериализатор с данными
+        serializer = ProductImageSerializer(data={
+            'product': product_id,
+            'image': request.FILES['image']
+        })
+        
+        if serializer.is_valid():
+            serializer.save(product=product)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
+        return Response({"error": "Invalid data", "details": serializer.errors},
+                        status=status.HTTP_400_BAD_REQUEST)
+
+
+class ProductImageDetailView(APIView):
+    def get_object(self, pk):
+        """Получить объект изображения по ID или вернуть 404."""
+        try:
+            return ProductImage.objects.get(pk=pk)
+        except ProductImage.DoesNotExist:
+            raise Http404("Product image not found")
+
+    @swagger_auto_schema(
+        operation_id='get_product_image',
+        operation_summary='Получить информацию об изображении продукта',
+        operation_description='Возвращает информацию о конкретном изображении продукта.',
+        responses={
+            200: ProductImageSerializer,
+            404: 'Изображение не найдено'
+        }
+    )
+    def get(self, request, pk):
+        """Получить информацию о конкретном изображении продукта."""
+        image = self.get_object(pk)
+        serializer = ProductImageSerializer(image)
+        return Response(serializer.data)
+
+    @swagger_auto_schema(
+        operation_id='delete_product_image',
+        operation_summary='Удалить изображение продукта',
+        operation_description='Удаляет указанное изображение продукта.',
+        responses={
+            204: 'Изображение удалено',
+            401: 'Требуется аутентификация',
+            404: 'Не найдено'
+        },
+        security=[{'TokenAuth': []}]
+    )
+    def delete(self, request, pk):
+        """Удалить изображение продукта."""
+        if not request.user.is_authenticated:
+            return Response({"detail": "Authentication credentials were not provided."},
+                            status=status.HTTP_401_UNAUTHORIZED)
+        
+        image = self.get_object(pk)
+        image.delete()
+        return Response({"message": "Image deleted"}, status=status.HTTP_204_NO_CONTENT)

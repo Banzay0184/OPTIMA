@@ -1,5 +1,5 @@
 asgiref==3.8.1
-Django==5.1.6
+Django==4.2
 django-admin-interface==0.29.4
 django-colorfield==0.12.0
 django-cors-headers==4.7.0

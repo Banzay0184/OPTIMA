@@ -69,7 +69,6 @@ const HomePage = () => {
                         autoPlay
                         loop
                         muted
-                        onError={() => console.error("Ошибка загрузки видео")}
                     >
                         <img src={bgImg} alt="Fallback изображение" className="w-full h-full object-cover"/>
                     </video>
