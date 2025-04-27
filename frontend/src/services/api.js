@@ -242,7 +242,8 @@ export const adminLogin = async (username, password) => {
 export const adminFetchCategories = async () => {
   try {
     const response = await adminApi.get('/categories/');
-    return response.data;
+    // Убедимся, что возвращаем массив
+    return Array.isArray(response.data) ? response.data : [];
   } catch (error) {
     console.error('Error fetching categories (admin):', error);
     throw error;
@@ -283,7 +284,8 @@ export const adminDeleteCategory = async (id) => {
 export const adminFetchTypes = async () => {
   try {
     const response = await adminApi.get('/types/');
-    return response.data;
+    // Убедимся, что возвращаем массив
+    return Array.isArray(response.data) ? response.data : [];
   } catch (error) {
     console.error('Error fetching types (admin):', error);
     throw error;
@@ -324,7 +326,8 @@ export const adminDeleteType = async (id) => {
 export const adminFetchProducts = async (params = {}) => {
   try {
     const response = await adminApi.get('/products/', { params });
-    return response.data;
+    // Убедимся, что возвращаем массив
+    return Array.isArray(response.data) ? response.data : [];
   } catch (error) {
     console.error('Error fetching products (admin):', error);
     throw error;
@@ -334,6 +337,21 @@ export const adminFetchProducts = async (params = {}) => {
 export const adminFetchProductById = async (id) => {
   try {
     const response = await adminApi.get(`/products/${id}/`);
+    // Проверяем, что response.data существует
+    if (!response.data) {
+      throw new Error('Product data is empty');
+    }
+    
+    // Убедимся, что colors всегда массив
+    if (!Array.isArray(response.data.colors)) {
+      response.data.colors = [];
+    }
+    
+    // Убедимся, что images всегда массив
+    if (!Array.isArray(response.data.images)) {
+      response.data.images = [];
+    }
+    
     return response.data;
   } catch (error) {
     console.error(`Error fetching product ${id} (admin):`, error);

@@ -100,7 +100,7 @@ const AdminProductsPage = () => {
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="all">Все категории</option>
-            {categories.map((category) => (
+            {Array.isArray(categories) && categories.map((category) => (
               <option key={category.id} value={category.id}>
                 {category.category_name}
               </option>
@@ -116,7 +116,7 @@ const AdminProductsPage = () => {
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="all">Все типы</option>
-            {types
+            {Array.isArray(types) && types
               .filter(type => 
                 filters.category === "all" || 
                 parseInt(type.category.id) === parseInt(filters.category)
@@ -216,7 +216,7 @@ const AdminProductsPage = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredProducts.map((product) => (
+              {Array.isArray(filteredProducts) && filteredProducts.map((product) => (
                 <tr key={product.id}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {product.id}

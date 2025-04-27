@@ -344,7 +344,7 @@ const AdminProductEdit = () => {
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">Выберите категорию</option>
-            {categories.map(category => (
+            {Array.isArray(categories) && categories.map(category => (
               <option key={category.id} value={category.id}>
                 {category.category_name}
               </option>
@@ -363,9 +363,9 @@ const AdminProductEdit = () => {
             onChange={handleChange}
             required
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            disabled={filteredTypes.length === 0}
+            disabled={!Array.isArray(filteredTypes) || filteredTypes.length === 0}
           >
-            {filteredTypes.length === 0 ? (
+            {!Array.isArray(filteredTypes) || filteredTypes.length === 0 ? (
               <option value="">Нет доступных типов для выбранной категории</option>
             ) : (
               filteredTypes.map(type => (
@@ -558,7 +558,7 @@ const AdminProductEdit = () => {
       <h3 className="text-lg font-semibold text-gray-900 mb-4">Цвета</h3>
       
       <div className="grid grid-cols-1 gap-4">
-        {formData.colors.length > 0 && (
+        {Array.isArray(formData.colors) && formData.colors.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
             {formData.colors.map((colorItem, index) => (
               <div key={index} className="flex items-center p-3 border rounded-md bg-gray-50">
@@ -621,7 +621,7 @@ const AdminProductEdit = () => {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             {isNewProduct ? (
               // Отображаем временные изображения для нового продукта
-              tempImages.map(image => (
+              Array.isArray(tempImages) && tempImages.map(image => (
                 <div key={image.id} className="relative group">
                   <div className="aspect-w-1 aspect-h-1 bg-gray-100 overflow-hidden rounded-md">
                     <img
@@ -641,7 +641,7 @@ const AdminProductEdit = () => {
               ))
             ) : (
               // Отображаем существующие изображения для редактируемого продукта
-              images.map(image => (
+              Array.isArray(images) && images.map(image => (
                 <div key={image.id} className="relative group">
                   <div className="aspect-w-1 aspect-h-1 bg-gray-100 overflow-hidden rounded-md">
                     <img

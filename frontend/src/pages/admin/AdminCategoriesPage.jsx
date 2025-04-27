@@ -187,14 +187,14 @@ const AdminCategoriesPage = () => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {categories.length === 0 && !loading ? (
+            {!Array.isArray(categories) || categories.length === 0 && !loading ? (
               <tr>
                 <td colSpan="3" className="px-6 py-4 text-center text-gray-500">
                   Нет доступных категорий
                 </td>
               </tr>
             ) : (
-              categories.map((category) => (
+              Array.isArray(categories) && categories.map((category) => (
                 <tr key={category.id}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {category.id}

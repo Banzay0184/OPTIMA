@@ -33,6 +33,7 @@ console_command = '/manage.py shell'
   command = "gunicorn config.wsgi:application --bind 0.0.0.0:8000"
 
 [mounts]
-source="data_volume"
-destination="/code/data"
+  source="data_volume"
+  destination="/code/data"
+
 

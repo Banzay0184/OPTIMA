@@ -188,7 +188,7 @@ const AdminTypesPage = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Выберите категорию</option>
-                {categories.map((category) => (
+                {Array.isArray(categories) && categories.map((category) => (
                   <option key={category.id} value={category.id}>
                     {category.category_name}
                   </option>
@@ -249,14 +249,14 @@ const AdminTypesPage = () => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {types.length === 0 && !loading ? (
+            {!Array.isArray(types) || types.length === 0 && !loading ? (
               <tr>
                 <td colSpan="4" className="px-6 py-4 text-center text-gray-500">
                   Нет доступных типов
                 </td>
               </tr>
             ) : (
-              types.map((type) => (
+              Array.isArray(types) && types.map((type) => (
                 <tr key={type.id}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {type.id}
@@ -268,7 +268,7 @@ const AdminTypesPage = () => {
                         onChange={(e) => setEditingCategoryId(e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
-                        {categories.map((category) => (
+                        {Array.isArray(categories) && categories.map((category) => (
                           <option key={category.id} value={category.id}>
                             {category.category_name}
                           </option>
