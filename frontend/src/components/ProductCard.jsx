@@ -42,7 +42,7 @@ const ProductCard = ({ product }) => {
                         variants={imageVariants}
                         src={
                             product.images && product.images.length > 0
-                                ? `http://127.0.0.1:8000${product.images[0].image}`
+                                ? `https://optima.fly.dev${product.images[0].image}`
                                 : "/placeholder.svg"
                         }
                         alt={product.product_name}

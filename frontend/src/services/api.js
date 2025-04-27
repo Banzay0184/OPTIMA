@@ -1,385 +1,416 @@
 // src/services/api.js
 import axios from "axios";
 
-// Базовые URL для API
-const API_URL = 'https://optima.fly.dev/api/v1';
-const ADMIN_API_URL = 'https://optima.fly.dev/api/v1' ;
+const BASE_URL = 'https://optima.fly.dev/api/v1';
 
-// Функции для обработки ответов и ошибок
-const handleResponse = (response) => {
-  return response;
+// Функция для определения нужного формата токена
+const getTokenFormat = (token) => {
+  if (!token) return null;
+  
+  // Проверяем, является ли токен JWT (формат: xxxx.yyyy.zzzz)
+  if (token.split('.').length === 3) {
+    try {
+      // Попытка декодировать JWT
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      
+      // Проверка срока действия токена
+      const currentTime = Math.floor(Date.now() / 1000);
+      if (payload.exp && payload.exp < currentTime) {
+        console.warn("JWT токен просрочен");
+        return null;
+      }
+      
+      // Для JWT используется формат "Bearer token"
+      return "Bearer";
+    } catch (e) {
+      console.warn("Ошибка при проверке JWT формата:", e);
+      return null;
+    }
+  }
+  
+  // Для прочих токенов используем формат "Token token" (DRF)
+  return "Token";
 };
 
-const handleError = (error) => {
-  if (error.response) {
-    // Ошибка от сервера с ответом
+// Функция для получения токена из локального хранилища
+const getAdminToken = () => {
+  // Проверяем наличие токена во всех возможных местах хранения
+  const token = localStorage.getItem("adminToken") || 
+                localStorage.getItem("token") || 
+                localStorage.getItem("access_token");
+  
+  if (!token) {
+    console.warn("Токен не найден в локальном хранилище");
+    return null;
+  }
+  
+  // Проверяем формат и валидность токена
+  const tokenFormat = getTokenFormat(token);
+  
+  if (!tokenFormat) {
+    console.warn("Токен недействителен или просрочен");
+    return null;
+  }
+  
+  return token;
+};
+
+// Создаем клиент axios для общих запросов
+const api = axios.create({
+  baseURL: BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Создаем клиент axios для административных запросов
+const adminApi = axios.create({
+  baseURL: BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Интерцептор для добавления токена к каждому запросу
+adminApi.interceptors.request.use(
+  (config) => {
+    const token = getAdminToken();
     
-    // Если запрос не авторизован, попытаемся перенаправить на страницу входа
-    if (error.response.status === 401 || error.response.status === 403) {
-      if (window.location.pathname.includes('/admin')) {
+    if (token) {
+      const tokenFormat = getTokenFormat(token);
+      if (tokenFormat) {
+        config.headers.Authorization = `${tokenFormat} ${token}`;
+      } else {
+        // Если токен невалидный, удаляем его из хранилища
+        localStorage.removeItem("adminToken");
+        localStorage.removeItem("token");
+        localStorage.removeItem("access_token");
+        
+        // Перенаправляем на страницу входа
+        if (window.location.pathname.includes('/admin') && 
+            !window.location.pathname.includes('/admin/login')) {
+          window.location.href = '/admin/login';
+        }
+      }
+    }
+    
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Интерцептор для обработки ошибок
+adminApi.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Если токен просрочен или недействителен (401)
+    if (error.response && error.response.status === 401) {
+      console.error('Ошибка авторизации:', error.response.data);
+      // Выполняем выход из системы
+      localStorage.removeItem("adminToken");
+      localStorage.removeItem("token");
+      localStorage.removeItem("access_token");
+      
+      // Обновляем страницу для перехода на логин если мы на странице админки
+      if (window.location.pathname.includes('/admin') && 
+          !window.location.pathname.includes('/admin/login')) {
         window.location.href = '/admin/login';
       }
     }
+    
+    return Promise.reject(error);
   }
-  
-  // Просто передаем ошибку дальше для обработки в компонентах
-  throw error;
-};
-
-// Получение токена с учетом различных форматов хранения
-const getToken = () => {
-  // Проверяем наличие токена в разных местах хранения
-  return localStorage.getItem('token') || 
-         localStorage.getItem('access_token') || 
-         sessionStorage.getItem('token') || 
-         sessionStorage.getItem('access_token');
-};
-
-// Получение и форматирование токена для заголовка авторизации
-const getAuthHeader = () => {
-  const token = getToken();
-  
-  if (!token) return {};
-  
-  // Проверяем, является ли токен JWT (формат: xxxx.yyyy.zzzz)
-  if (token.split('.').length === 3) {
-    return { Authorization: `Bearer ${token}` };
-  }
-  
-  // Для DRF или других форматов
-  return { Authorization: `Token ${token}` };
-};
-
-// Получение админского токена
-const getAdminToken = () => {
-  return localStorage.getItem('adminToken') || 
-         localStorage.getItem('token') || 
-         localStorage.getItem('access_token');
-};
-
-// Получение и форматирование админского токена для заголовка авторизации
-const getAdminAuthHeader = () => {
-  const token = getAdminToken();
-  
-  if (!token) return {};
-  
-  // Проверяем, является ли токен JWT (формат: xxxx.yyyy.zzzz)
-  if (token.split('.').length === 3) {
-    return { Authorization: `Bearer ${token}` };
-  }
-  
-  // Для DRF или других форматов
-  return { Authorization: `Token ${token}` };
-};
-
-// Создаем экземпляр axios для обычных запросов
-const api = axios.create({
-  baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// Создаем экземпляр axios для запросов администратора
-const adminApi = axios.create({
-  baseURL: ADMIN_API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// Интерцептор для добавления токена авторизации к запросам администратора
-adminApi.interceptors.request.use(
-  (config) => {
-    const headers = getAdminAuthHeader();
-    if (headers.Authorization) {
-      config.headers = {
-        ...config.headers,
-        ...headers
-      };
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
 );
 
-// Функции API для публичной части
-
-// Получение всех категорий
+// API-запросы для публичной части сайта
+// --- Categories ---
 export const fetchCategories = async () => {
   try {
     const response = await api.get('/categories/');
-    return response.data.results || response.data;
+    return response.data;
   } catch (error) {
-    return handleError(error);
+    console.error('Error fetching categories:', error);
+    throw error;
   }
 };
 
-// Получение всех типов продуктов
+// --- Types ---
 export const fetchTypes = async () => {
   try {
     const response = await api.get('/types/');
-    return response.data.results || response.data;
+    return response.data;
   } catch (error) {
-    return handleError(error);
+    console.error('Error fetching types:', error);
+    throw error;
   }
 };
 
-// Получение продуктов с фильтрацией
-export const fetchProducts = async (categoryId = null, typeId = null, excludeId = null) => {
+export const fetchTypesByCategory = async (categoryId) => {
   try {
-    const params = {};
-    
-    if (categoryId && categoryId !== "all") {
-      params.category = categoryId;
-    }
-    if (typeId) {
-      params.type = typeId;
-    }
-    if (excludeId) {
-      params.exclude = excludeId;
-    }
-    
-    const response = await api.get('/products/', { params });
-    return response.data.results || response.data;
+    const response = await api.get(`/types/?category=${categoryId}`);
+    return response.data;
   } catch (error) {
-    return handleError(error);
+    console.error(`Error fetching types for category ${categoryId}:`, error);
+    throw error;
   }
 };
 
-// Получение деталей продукта по ID
+// --- Products ---
+export const fetchProducts = async (params = {}) => {
+  try {
+    const response = await api.get('/products/', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    throw error;
+  }
+};
+
+export const fetchProductsByType = async (typeId) => {
+  try {
+    const response = await api.get(`/products/?type=${typeId}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching products for type ${typeId}:`, error);
+    throw error;
+  }
+};
+
 export const fetchProductById = async (productId) => {
   try {
     const response = await api.get(`/products/${productId}/`);
     return response.data;
   } catch (error) {
-    return handleError(error);
+    console.error(`Error fetching product ${productId}:`, error);
+    throw error;
   }
 };
 
-// Функции для административной части
+export const searchProducts = async (query) => {
+  try {
+    const response = await api.get(`/products/search/?query=${query}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error searching products with query '${query}':`, error);
+    throw error;
+  }
+};
 
-// Авторизация администратора
+// --- Admin API ---
+
+// Авторизация
 export const adminLogin = async (username, password) => {
   try {
-    const response = await axios.post(`${ADMIN_API_URL}/token/`, { username, password });
+    const response = await axios.post(`${BASE_URL}/token/`, { username, password });
     
-    // Извлекаем токен из ответа сервера, обрабатывая разные форматы
+    // Обработка и логирование ответа
+    console.log('Login response:', response.data);
+    
+    // Если получен токен, сохраняем его
     const token = response?.data?.token || 
-                 response?.data?.access || 
-                 response?.data?.access_token || 
-                 response?.data?.key || 
-                 response?.data?.auth_token || 
-                 (response?.data?.auth?.token) || 
-                 (response?.data?.user?.token) || 
-                 (response?.data?.data?.token) || 
-                 (typeof response.data === 'string' ? response.data : null);
-    
-    // Если токен получен, сохраняем его
+                  response?.data?.access || 
+                  response?.data?.access_token;
+                  
     if (token) {
       localStorage.setItem("adminToken", token);
+      // Для обратной совместимости также сохраняем в старых форматах
       localStorage.setItem("token", token);
       localStorage.setItem("access_token", token);
+      
+      // Проверяем формат токена
+      const tokenFormat = getTokenFormat(token);
+      if (!tokenFormat) {
+        console.warn("Получен недействительный токен от сервера");
+      }
+    } else {
+      console.error("Токен не получен в ответе от сервера");
     }
     
     return response.data;
   } catch (error) {
-    return handleError(error);
+    console.error('Login error:', error.response?.data || error.message);
+    throw error;
   }
 };
 
-// Получение всех категорий для админа
-export const adminGetCategories = async () => {
+// --- Categories ---
+export const adminFetchCategories = async () => {
   try {
     const response = await adminApi.get('/categories/');
-    return response.data.results || response.data;
-  } catch (error) {
-    return handleError(error);
-  }
-};
-
-// Добавление новой категории
-export const adminAddCategory = async (categoryData) => {
-  try {
-    const response = await adminApi.post('/categories/', categoryData);
     return response.data;
   } catch (error) {
-    return handleError(error);
+    console.error('Error fetching categories (admin):', error);
+    throw error;
   }
 };
 
-// Обновление категории
-export const adminUpdateCategory = async (categoryId, categoryData) => {
+export const adminAddCategory = async (category) => {
   try {
-    const response = await adminApi.put(`/categories/${categoryId}/`, categoryData);
+    const response = await adminApi.post('/categories/', category);
     return response.data;
   } catch (error) {
-    return handleError(error);
+    console.error('Error adding category:', error);
+    throw error;
   }
 };
 
-// Удаление категории
-export const adminDeleteCategory = async (categoryId) => {
+export const adminUpdateCategory = async (id, category) => {
   try {
-    const response = await adminApi.delete(`/categories/${categoryId}/`);
-    return response.data || true;
+    const response = await adminApi.put(`/categories/${id}/`, category);
+    return response.data;
   } catch (error) {
-    return handleError(error);
+    console.error(`Error updating category ${id}:`, error);
+    throw error;
   }
 };
 
-// Получение всех типов для админа
-export const adminGetTypes = async () => {
+export const adminDeleteCategory = async (id) => {
+  try {
+    await adminApi.delete(`/categories/${id}/`);
+    return true;
+  } catch (error) {
+    console.error(`Error deleting category ${id}:`, error);
+    throw error;
+  }
+};
+
+// --- Types ---
+export const adminFetchTypes = async () => {
   try {
     const response = await adminApi.get('/types/');
-    return response.data.results || response.data;
-  } catch (error) {
-    return handleError(error);
-  }
-};
-
-// Добавление нового типа
-export const adminAddType = async (typeData) => {
-  try {
-    // Преобразуем данные для совместимости с API сервера
-    // Бэкенд может ожидать поле category_id вместо category
-    const formattedData = {
-      ...typeData,
-      category_id: typeData.category_id || typeData.category
-    };
-    
-    const response = await adminApi.post('/types/', formattedData);
     return response.data;
   } catch (error) {
-    return handleError(error);
+    console.error('Error fetching types (admin):', error);
+    throw error;
   }
 };
 
-// Обновление типа
-export const adminUpdateType = async (typeId, typeData) => {
+export const adminAddType = async (type) => {
   try {
-    // Аналогично преобразуем данные для обновления
-    const formattedData = {
-      ...typeData,
-      category_id: typeData.category_id || typeData.category
-    };
-    
-    const response = await adminApi.put(`/types/${typeId}/`, formattedData);
+    const response = await adminApi.post('/types/', type);
     return response.data;
   } catch (error) {
-    return handleError(error);
+    console.error('Error adding type:', error);
+    throw error;
   }
 };
 
-// Удаление типа
-export const adminDeleteType = async (typeId) => {
+export const adminUpdateType = async (id, type) => {
   try {
-    const response = await adminApi.delete(`/types/${typeId}/`);
-    return response.data || true;
+    const response = await adminApi.put(`/types/${id}/`, type);
+    return response.data;
   } catch (error) {
-    return handleError(error);
+    console.error(`Error updating type ${id}:`, error);
+    throw error;
   }
 };
 
-// Получение всех продуктов для админа
-export const adminGetProducts = async (params = {}) => {
+export const adminDeleteType = async (id) => {
+  try {
+    await adminApi.delete(`/types/${id}/`);
+    return true;
+  } catch (error) {
+    console.error(`Error deleting type ${id}:`, error);
+    throw error;
+  }
+};
+
+// --- Products ---
+export const adminFetchProducts = async (params = {}) => {
   try {
     const response = await adminApi.get('/products/', { params });
-    return response.data.results || response.data;
-  } catch (error) {
-    return handleError(error);
-  }
-};
-
-// Получение деталей продукта для админа
-export const adminGetProduct = async (productId) => {
-  try {
-    const response = await adminApi.get(`/products/${productId}/`);
     return response.data;
   } catch (error) {
-    return handleError(error);
+    console.error('Error fetching products (admin):', error);
+    throw error;
   }
 };
 
-// Добавление нового продукта
-export const adminAddProduct = async (productData) => {
+export const adminFetchProductById = async (id) => {
   try {
-    // Формируем FormData для возможности загрузки файлов
-    let formData;
+    const response = await adminApi.get(`/products/${id}/`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching product ${id} (admin):`, error);
+    throw error;
+  }
+};
+
+export const adminAddProduct = async (product) => {
+  try {
+    // Для продукта используем FormData, т.к. могут быть файлы
+    const formData = new FormData();
     
-    if (productData instanceof FormData) {
-      formData = productData;
-    } else {
-      formData = new FormData();
-      // Добавляем все поля продукта в FormData
-      Object.keys(productData).forEach(key => {
-        // Обрабатываем массивы и объекты
-        if (typeof productData[key] === 'object' && !(productData[key] instanceof File)) {
-          formData.append(key, JSON.stringify(productData[key]));
-        } else {
-          formData.append(key, productData[key]);
-        }
-      });
-    }
+    // Добавляем все поля продукта в formData
+    Object.keys(product).forEach(key => {
+      // Если поле - массив, но не является файлом
+      if (Array.isArray(product[key]) && key !== 'images') {
+        // Преобразуем массив в JSON строку
+        formData.append(key, JSON.stringify(product[key]));
+      } 
+      // Для обычных полей
+      else if (product[key] !== undefined && product[key] !== null && key !== 'images') {
+        formData.append(key, product[key]);
+      }
+    });
     
     const response = await adminApi.post('/products/', formData, {
       headers: {
-        ...getAdminAuthHeader(),
         'Content-Type': 'multipart/form-data',
       },
     });
     
     return response.data;
   } catch (error) {
-    return handleError(error);
+    console.error('Error adding product:', error);
+    throw error;
   }
 };
 
-// Обновление продукта
-export const adminUpdateProduct = async (productId, productData) => {
+export const adminUpdateProduct = async (id, product) => {
   try {
-    // Формируем FormData для возможности загрузки файлов
-    let formData;
+    // Для продукта используем FormData, т.к. могут быть файлы
+    const formData = new FormData();
     
-    if (productData instanceof FormData) {
-      formData = productData;
-    } else {
-      formData = new FormData();
-      // Добавляем все поля продукта в FormData
-      Object.keys(productData).forEach(key => {
-        // Обрабатываем массивы и объекты
-        if (typeof productData[key] === 'object' && !(productData[key] instanceof File)) {
-          formData.append(key, JSON.stringify(productData[key]));
-        } else {
-          formData.append(key, productData[key]);
-        }
-      });
-    }
+    // Добавляем все поля продукта в formData
+    Object.keys(product).forEach(key => {
+      // Если поле - массив, но не является файлом
+      if (Array.isArray(product[key]) && key !== 'images') {
+        // Преобразуем массив в JSON строку
+        formData.append(key, JSON.stringify(product[key]));
+      } 
+      // Для обычных полей
+      else if (product[key] !== undefined && product[key] !== null && key !== 'images') {
+        formData.append(key, product[key]);
+      }
+    });
     
-    const response = await adminApi.put(`/products/${productId}/`, formData, {
+    const response = await adminApi.patch(`/products/${id}/`, formData, {
       headers: {
-        ...getAdminAuthHeader(),
         'Content-Type': 'multipart/form-data',
       },
     });
     
     return response.data;
   } catch (error) {
-    return handleError(error);
+    console.error(`Error updating product ${id}:`, error);
+    throw error;
   }
 };
 
-// Удаление продукта
-export const adminDeleteProduct = async (productId) => {
+export const adminDeleteProduct = async (id) => {
   try {
-    const response = await adminApi.delete(`/products/${productId}/`);
-    return response.data || true;
+    await adminApi.delete(`/products/${id}/`);
+    return true;
   } catch (error) {
-    return handleError(error);
+    console.error(`Error deleting product ${id}:`, error);
+    throw error;
   }
 };
 
-// Загрузка изображения продукта
+// Загрузка изображений для продукта
 export const adminUploadProductImage = async (productId, imageFile) => {
   try {
     const formData = new FormData();
@@ -387,24 +418,25 @@ export const adminUploadProductImage = async (productId, imageFile) => {
     
     const response = await adminApi.post(`/products/${productId}/images/`, formData, {
       headers: {
-        ...getAdminAuthHeader(),
         'Content-Type': 'multipart/form-data',
       },
     });
     
     return response.data;
   } catch (error) {
-    return handleError(error);
+    console.error(`Error uploading image for product ${productId}:`, error);
+    throw error;
   }
 };
 
 // Удаление изображения продукта
-export const adminDeleteProductImage = async (imageId) => {
+export const adminDeleteProductImage = async (productId, imageId) => {
   try {
-    const response = await adminApi.delete(`/product-images/${imageId}/`);
-    return response.data || true;
+    await adminApi.delete(`/products/${productId}/images/${imageId}/`);
+    return true;
   } catch (error) {
-    return handleError(error);
+    console.error(`Error deleting image ${imageId} for product ${productId}:`, error);
+    throw error;
   }
 };
 

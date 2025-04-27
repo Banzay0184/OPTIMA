@@ -225,7 +225,7 @@ const AdminProductsPage = () => {
                     <div className="h-10 w-10 rounded-full overflow-hidden bg-gray-100">
                       {product.images && product.images.length > 0 ? (
                         <img
-                          src={`http://127.0.0.1:8000${product.images[0].image}`}
+                          src={`https://optima.fly.dev${product.images[0].image}`}
                           alt={product.product_name}
                           className="h-full w-full object-cover"
                           onError={(e) => {

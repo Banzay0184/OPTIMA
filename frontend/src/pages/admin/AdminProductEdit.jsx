@@ -645,7 +645,7 @@ const AdminProductEdit = () => {
                 <div key={image.id} className="relative group">
                   <div className="aspect-w-1 aspect-h-1 bg-gray-100 overflow-hidden rounded-md">
                     <img
-                      src={`http://127.0.0.1:8000${image.image}`}
+                      src={`https://optima.fly.dev${image.image}`}
                       alt="Фото продукта"
                       className="object-cover w-full h-full"
                       onError={(e) => {

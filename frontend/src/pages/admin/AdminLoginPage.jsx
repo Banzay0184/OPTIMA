@@ -1,21 +1,45 @@
 "use client"
 
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Lock, User, AlertCircle } from "lucide-react";
+import { Lock, User, AlertCircle, Eye, EyeOff } from "lucide-react";
 import { adminLogin } from "../../services/api";
 import axios from "axios";
+import { toast } from "react-toastify";
 
 const fadeIn = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
 };
 
+// Функция для проверки JWT токена
+const validateJWT = (token) => {
+  try {
+    // Проверяем формат JWT (xxxx.yyyy.zzzz)
+    if (!token || token.split('.').length !== 3) {
+      return { valid: false, error: "Неверный формат JWT токена" };
+    }
+    
+    // Декодируем payload
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    
+    // Проверяем срок действия
+    if (payload.exp && Date.now() >= payload.exp * 1000) {
+      return { valid: false, error: "JWT токен истек" };
+    }
+    
+    return { valid: true, payload };
+  } catch (e) {
+    console.error("Ошибка при проверке JWT:", e);
+    return { valid: false, error: "Ошибка при проверке JWT: " + e.message };
+  }
+};
+
 // Функция для определения правильного формата токена
 const getTokenFormat = (token) => {
   // Проверяем, является ли токен JWT (формат: xxxx.yyyy.zzzz)
-  if (token.split('.').length === 3) {
+  if (token && token.split('.').length === 3) {
     try {
       // Попытка декодировать JWT
       JSON.parse(atob(token.split('.')[1]));
@@ -23,6 +47,7 @@ const getTokenFormat = (token) => {
       return "Bearer";
     } catch (e) {
       // Ошибка при проверке JWT токена
+      console.warn("Ошибка при проверке JWT формата:", e);
     }
   }
   
@@ -35,7 +60,48 @@ const AdminLoginPage = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [passwordVisible, setPasswordVisible] = useState(false);
   const navigate = useNavigate();
+
+  // Проверяем, если пользователь уже залогинен
+  useEffect(() => {
+    const checkAuth = () => {
+      // Проверяем наличие токена во всех возможных местах хранения
+      const token = localStorage.getItem("adminToken") || 
+                   localStorage.getItem("token") || 
+                   localStorage.getItem("access_token");
+      
+      if (token) {
+        // Проверяем JWT
+        if (token.split('.').length === 3) {
+          const { valid, error } = validateJWT(token);
+          if (valid) {
+            // Токен действителен, перенаправляем на панель администратора
+            navigate("/admin");
+            return;
+          } else {
+            console.warn("Ошибка валидации JWT:", error);
+            // Токен недействителен - удаляем все возможные токены
+            localStorage.removeItem("adminToken");
+            localStorage.removeItem("token");
+            localStorage.removeItem("access_token");
+            return;
+          }
+        }
+        
+        // Если не JWT формат, просто проверяем наличие
+        if (token) {
+          navigate("/admin");
+        }
+      }
+    };
+    
+    checkAuth();
+  }, [navigate]);
+
+  const togglePasswordVisibility = () => {
+    setPasswordVisible(!passwordVisible);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -45,30 +111,25 @@ const AdminLoginPage = () => {
       return;
     }
     
+    setLoading(true);
+    setError("");
+    
     try {
-      setLoading(true);
-      setError("");
-      
-      // Очищаем старые токены перед входом
-      localStorage.removeItem("adminToken");
-      localStorage.removeItem("token");
-      localStorage.removeItem("access_token");
-      
       const response = await adminLogin(username, password);
       
-      // Проверка ответа от сервера
+      // Извлекаем токен из ответа сервера, обрабатывая разные форматы ответа
       const token = response?.token || 
-                   response?.access || 
                    response?.access_token || 
+                   response?.access || 
                    response?.key || 
                    response?.auth_token || 
                    (response?.auth?.token) || 
-                   (response?.user?.token) || 
-                   (response?.data?.token) || 
-                   (typeof response === 'string' ? response : null);
+                   (response?.user?.token);
       
       if (token) {
-        // Сохраняем токен во всех возможных форматах для максимальной совместимости
+        console.log("Токен получен:", token.substring(0, 10) + "...");
+        
+        // Сохраняем токен во всех возможных местах хранения для совместимости
         localStorage.setItem("adminToken", token);
         localStorage.setItem("token", token);
         localStorage.setItem("access_token", token);
@@ -82,7 +143,7 @@ const AdminLoginPage = () => {
           
           // Создаем тестовый экземпляр axios с токеном
           const testAxios = axios.create({
-            baseURL: "http://127.0.0.1:8000/api/v1/",
+            baseURL: "https://optima.fly.dev/api/v1/",
             headers: {
               "Content-Type": "application/json",
               "Authorization": `${tokenFormat} ${token}`
@@ -90,9 +151,10 @@ const AdminLoginPage = () => {
           });
           
           // Пробуем получить категории с новым токеном
-          const testResponse = await testAxios.get("/categories/");
+          await testAxios.get("/categories/");
           
-          // Если запрос прошел успешно, перенаправляем пользователя
+          // Если запрос прошел успешно, показываем уведомление и перенаправляем
+          toast.success("Вход выполнен успешно!");
           navigate("/admin");
         } catch (testError) {
           // Детализируем ошибку для пользователя
@@ -170,71 +232,68 @@ const AdminLoginPage = () => {
           <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">Вход в систему</h1>
           
           {error && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 flex items-start"
-            >
-              <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" />
-              <span>{error}</span>
-            </motion.div>
+            <div className="flex items-center gap-2 p-3 mb-4 bg-red-50 border border-red-300 text-red-700 rounded">
+              <AlertCircle size={20} />
+              <p>{error}</p>
+            </div>
           )}
           
-          <form onSubmit={handleSubmit}>
-            <div className="mb-6">
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <label 
+                htmlFor="username" 
+                className="text-sm font-medium text-gray-700 flex items-center gap-2"
+              >
+                <User size={18} />
                 Имя пользователя
               </label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-500">
-                  <User className="h-5 w-5" />
-                </span>
-                <input
-                  id="username"
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="py-3 px-4 pl-10 block w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-                  placeholder="Введите имя пользователя"
-                  autoComplete="username"
-                />
-              </div>
+              <input
+                id="username"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Введите имя пользователя"
+              />
             </div>
             
-            <div className="mb-6">
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="space-y-2">
+              <label 
+                htmlFor="password" 
+                className="text-sm font-medium text-gray-700 flex items-center gap-2"
+              >
+                <Lock size={18} />
                 Пароль
               </label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-500">
-                  <Lock className="h-5 w-5" />
-                </span>
                 <input
                   id="password"
-                  type="password"
+                  type={passwordVisible ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="py-3 px-4 pl-10 block w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Введите пароль"
-                  autoComplete="current-password"
                 />
+                <button 
+                  type="button"
+                  onClick={togglePasswordVisibility}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                >
+                  {passwordVisible ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
               </div>
             </div>
             
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className={`w-full py-2 px-4 ${
+                loading 
+                  ? "bg-blue-400 cursor-not-allowed" 
+                  : "bg-blue-600 hover:bg-blue-700"
+              } text-white font-medium rounded-md shadow transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
             >
-              {loading ? (
-                <span className="flex items-center">
-                  <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Вход...
-                </span>
-              ) : "Войти"}
+              {loading ? "Вход..." : "Войти"}
             </button>
           </form>
         </div>

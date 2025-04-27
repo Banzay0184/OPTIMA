@@ -27,7 +27,7 @@ const formatProductData = (productData) => ({
     type: productData.type.id,
     typeName: productData.type.type_name,
     description: productData.description,
-    images: productData.images.map((img) => `http://127.0.0.1:8000${img.image}`),
+    images: productData.images.map((img) => `https://optima.fly.dev${img.image}`),
     inStock: productData.in_stock,
     articleNumber: productData.article_number,
     specifications: [
