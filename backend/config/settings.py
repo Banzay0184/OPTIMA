@@ -10,9 +10,12 @@ DEBUG = True
 ALLOWED_HOSTS = ["optima.fly.dev"]
 
 CSRF_TRUSTED_ORIGINS = ['https://optima.fly.dev']
+
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
+    "https://optima.fly.dev",
+    "https://optima-plast.uz,
 ]
+
 
 CORS_ALLOWED_CREDENTIALS = True
 
