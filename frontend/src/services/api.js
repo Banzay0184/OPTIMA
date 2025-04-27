@@ -2,8 +2,8 @@
 import axios from "axios";
 
 // Базовые URL для API
-const API_URL = 'http://localhost:8000/api/v1';
-const ADMIN_API_URL = 'http://localhost:8000/api/v1';
+const API_URL = 'https://optima.fly.dev/api/v1';
+const ADMIN_API_URL = 'https://optima.fly.dev/api/v1' ;
 
 // Функции для обработки ответов и ошибок
 const handleResponse = (response) => {
